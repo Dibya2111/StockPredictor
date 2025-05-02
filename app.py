@@ -12,7 +12,7 @@ try:
 except Exception as e:
     st.error(f"Error loading model: {e}")
     st.stop()
-API_KEY = "YOUR_API_KEY"
+API_KEY = "MH091Q3VONJ85P92"
 @st.cache_data(ttl=3600)
 def fetch_stock_data(symbol, outputsize='full'):
     try:
