@@ -6,19 +6,13 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from keras.models import load_model
 from alpha_vantage.timeseries import TimeSeries
-
-# Load Model
 model_path = 'stock_price_prediction.keras'
 try:
     model = load_model(model_path)
 except Exception as e:
     st.error(f"Error loading model: {e}")
     st.stop()
-
-# Alpha Vantage API Key (replace with your actual API key)
 API_KEY = "YOUR_API_KEY"
-
-# 📌 Alpha Vantage data fetch with caching
 @st.cache_data(ttl=3600)
 def fetch_stock_data(symbol, outputsize='full'):
     try:
@@ -37,7 +31,6 @@ def fetch_stock_data(symbol, outputsize='full'):
         st.error(f"❌ API error: {e}")
         return pd.DataFrame()
 
-# Streamlit UI
 st.title("📈 Stock Price Prediction")
 stock = st.text_input('Enter the stock ticker', 'GOOG')
 
@@ -55,19 +48,13 @@ if stock:
         st.success("Stock data retrieved successfully! ✅")
         st.subheader("Data from 2010-2024")
         st.write(data)
-
-        # Prepare training and test sets
         data_close = data[['Close']]
         data_train = data_close.iloc[:int(len(data_close) * 0.80)]
         data_test = data_close.iloc[int(len(data_close) * 0.80):]
-
-        # Combine for full scaling
         full_data = pd.concat([data_train, data_test], ignore_index=True)
 
         scaler = MinMaxScaler(feature_range=(0,1))
         scaled_data = scaler.fit_transform(full_data)
-
-        # Prepare test input
         x_test = []
         y_test = []
         test_start = len(data_train) - 100  # start 100 days before test set
@@ -80,24 +67,17 @@ if stock:
         y_test = np.array(y_test)
 
         st.write("✅ Test data shape:", x_test.shape)
-
-        # Prediction
         predicted_price = model.predict(x_test)
-
-        # Inverse scale (for single feature)
         scale_factor = 1 / scaler.scale_[0]
         y_predicted = predicted_price * scale_factor
         y_test_actual = y_test * scale_factor
 
-        # Accuracy
         mae = mean_absolute_error(y_test_actual, y_predicted)
         mse = mean_squared_error(y_test_actual, y_predicted)
 
         st.subheader("📊 Model Accuracy")
         st.write(f"🔹 **Mean Absolute Error (MAE):** {mae:.2f}")
         st.write(f"🔹 **Mean Squared Error (MSE):** {mse:.2f}")
-
-        # Plot actual vs predicted
         st.subheader("📉 Original Price vs Predicted Price")
         fig2 = plt.figure(figsize=(10, 5))
         plt.plot(y_test_actual, 'g', label='Actual Price')
@@ -105,8 +85,6 @@ if stock:
         plt.legend()
         plt.title("Stock Price Prediction")
         st.pyplot(fig2)
-
-        # Moving Averages chart
         st.subheader("Price vs Moving Averages")
         ma_50 = data['Close'].rolling(50).mean()
         ma_100 = data['Close'].rolling(100).mean()
